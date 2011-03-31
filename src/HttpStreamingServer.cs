@@ -47,6 +47,8 @@ namespace Stever.PlaySpot
         const int ThreadAbortDelayTimes = 6;
         const int ThreadAbortDelay = 500;
         const int SocketSendTimeout = 10000; // 10 seconds.
+        const int CreateTrackFromLinkRetryLimit = 10; // 1/2 second in total.
+        const int CreateTrackFromLinkRetryDelay = 50; // 50 milliseconds.
 
         static bool _activeRequest;
 
@@ -454,9 +456,7 @@ namespace Stever.PlaySpot
                 {
 					// Get the name of the agent, without version and other information.
                     string userAgent = table["user-agent"];
-					String agent = null;
-					if (userAgent.IndexOf('/') < 0) agent = userAgent;
-					else agent = userAgent.Substring(0, userAgent.IndexOf('/'));
+					String agent = userAgent.IndexOf('/') < 0 ? userAgent : userAgent.Substring(0, userAgent.IndexOf('/'));
 
 #if DEBUG
                     if (Log.IsDebugEnabled)
@@ -483,6 +483,7 @@ namespace Stever.PlaySpot
                     SendForbiddenResponse();
                     goto EndResponse;
                 }
+
                 string uri = strArray[1].Trim();
 #if DEBUG
                 if (Log.IsDebugEnabled)
@@ -515,6 +516,7 @@ namespace Stever.PlaySpot
                     SendForbiddenResponse();
                     goto EndResponse;
                 }
+
                 string sid = uri.Substring(BasePath.Length, 36);
 #if DEBUG
                 if (Log.IsDebugEnabled) Log.Debug("sid = " + sid);
@@ -530,22 +532,43 @@ namespace Stever.PlaySpot
                     SendForbiddenResponse();
                     goto EndResponse;
                 }
+
 #if DEBUG
                 if (Log.IsDebugEnabled)
                     Log.Debug("Spotify Link = " + link);
 #endif
 
                 // Get track object from Spotify.
-                Link spotifyLink = Link.Create(link);
-                Track track = Track.CreateFromLink(spotifyLink);
-
-                if (track.Duration == 0)
+                // Note: There's a timing issue which is resolved here with a retry delay.
+                Track track = null;
+                int retryCount = CreateTrackFromLinkRetryLimit;
+                bool success = false;
+                while (!success && retryCount > 0)
                 {
 #if DEBUG
-                    if (Log.IsErrorEnabled)
-                        Log.Error("Duration is 0");
+                    if (Log.IsDebugEnabled)
+                        Log.Debug("Going to try and create track instance from link. retryCount = " + retryCount);
 #endif
 
+                    Link spotifyLink = Link.Create(link);
+                    track = Track.CreateFromLink(spotifyLink);
+                    if (track.Duration == 0)
+                    {
+#if DEBUG
+                        if (Log.IsErrorEnabled)
+                            Log.Error("Duration is 0");
+#endif
+                        retryCount--;
+                        Thread.Sleep(CreateTrackFromLinkRetryDelay);
+                    }
+                    else
+                    {
+                        success = true;
+                    }
+                }
+
+                if (!success)
+                {
                     SendForbiddenResponse();
                     goto EndResponse;
                 }
