@@ -32,7 +32,7 @@ Note
 
 You must use a Spotify Premium account to use this resolver at all.
 You will also require a Spotify API key, which is available from
-[the Spotify Developers site](http://developer.spotify.com/)
+[the Spotify Developers site](http://developer.spotify.com/).
 
 
 Compiling
@@ -49,8 +49,7 @@ This resolver is compiled using MonoDevelop on Mac and Linux, and Visual Studio
 2005 or newer on Windows. It has been tested on Mac, Windows and Linux.
 
 You need your own API key for this resolver to work. The API key should be
-copied into "#region Key" in the Spotify.cs source file. This key should be
-obtained from the Spotify Developers site http://developer.spotify.com/
+copied into "#region Key" in the Spotify.cs source file.
 
 It's a good idea to obfuscate the binary product to try avoid anyone obtaining
 your API key in disassembling the CLR assemblies produced.
