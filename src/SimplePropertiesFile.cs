@@ -93,9 +93,9 @@ namespace Stever.PlaySpot
                 string[] spit = row.Split('=');
                 string name = spit[0].Trim();
                 string value = spit[1].Trim();
-#if DEBUG
-                if (Log.IsDebugEnabled) Log.Debug(name + " = " + value);
-#endif
+//#if DEBUG
+//                if (Log.IsDebugEnabled) Log.Debug(name + " = " + value);
+//#endif
                 _section.Add(name, value);
             }
         }
