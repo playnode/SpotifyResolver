@@ -27,7 +27,110 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
 
-Getting Started
+Note
+----
+
+You must use a Spotify Premium account to use this resolver at all.
+You will also require a Spotify API key, which is available from
+[the Spotify Developers site](http://developer.spotify.com/)
+
+
+Compiling
+---------
+
+Pre-requisites:
+
+  * Common Language Runtime: Mono 2 on Mac & Linux, or .NET 2 on Windows.
+  * IDE: MonoDevelop on Mac & Linux, or Visual Studio 2005 or newer on Windows.
+  * libspotify for your platform, downloaded from the Spotify Developers site.
+  * lame encoder for your platform.
+
+This resolver is compiled using MonoDevelop on Mac and Linux, and Visual Studio
+2005 or newer on Windows. It has been tested on Mac, Windows and Linux.
+
+You need your own API key for this resolver to work. The API key should be
+copied into "#region Key" in the Spotify.cs source file. This key should be
+obtained from the Spotify Developers site http://developer.spotify.com/
+
+It's a good idea to obfuscate the binary product to try avoid anyone obtaining
+your API key in disassembling the CLR assemblies produced.
+
+
+Configure & Run
 ---------------
 
-You need your own API key for this resolver to work.
+First check you have mono on the path:
+
+    mono --version
+
+This should give you version information for the Mono compiler. Otherwise you
+need to fix that first.
+
+The resolver will look for a configuration file called `spotify.conf` using the
+path defined by `PLAYDAR_ETC` and containing the following:
+
+    [spotify]
+    username=your_username
+    password=your_password
+
+The `bin` folder contains scripts that can be copied into the build output dir
+to wrap the resolver and provide the `PLAYDAR_ETC` environment variable.
+
+Test the resolver on the command-line to check it gives JSON resolver info, 
+something like the following:
+
+    a{"_msgtype":"settings","name":"Spotify Resolver","weight":90,"targettime":15000,"localonly":true}
+
+If it doesn't provide this then either the login failed or there is another
+issue preventing it from starting. Check the log file (written when using the
+debug build) which is written to `SpotifyResolver.log`.
+
+If you do get the JSON resolver info above it's ready to test using Playdar.
+
+Check that you also get info from running `lame` which is also required.
+
+Finally, the following guide suggests what files you might have for the
+resolver on each of the major platforms:
+
+Mac OS
+
+  * Newtonsoft.Json.Net20.dll
+  * SpotifyResolver.exe*
+  * SpotifyResolver.exe.config
+  * SpotifyResolver.exe.mdb
+  * SpotifyResolver.log
+  * SpotifyResolver.sh*
+  * lame*
+  * libspotify
+  * log4net.dll
+
+Linux
+
+  * Newtonsoft.Json.Net20.dll
+  * SpotifyResolver.exe*
+  * SpotifyResolver.exe.config
+  * SpotifyResolver.exe.mdb
+  * SpotifyResolver.log
+  * SpotifyResolver.sh*
+  * libspotify.so -> libspotify.so.4
+  * libspotify.so.4 -> libspotify.so.4.0.400076
+  * libspotify.so.4.0.400076
+  * log4net.dll
+
+*Assuming here that lame is already available somewhere on the system path.*
+
+Windows
+
+  * Newtonsoft.Json.Net20.dll*
+  * SpotifyResolver.exe*
+  * SpotifyResolver.exe.config*
+  * SpotifyResolver.log*
+  * SpotifyResolver.pdb*
+  * lame.exe*
+  * libspotify.dll*
+  * log4net.dll*
+
+*In all of the above, filenames appended with `*` are executable.*
+*Those with `->` are symbolic links.*
+
+Hopefully that helps get you up & running.
