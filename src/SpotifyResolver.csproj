@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{47B899FB-4FB2-4F5D-8862-B8EDBA4F5D4A}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Stever.PlaySpot</RootNamespace>
+    <AssemblyName>SpotifyResolver</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="Newtonsoft.Json.Net20, Version=3.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
+      <HintPath>..\lib\Newtonsoft.Json.Net20.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net, Version=1.2.9.0, Culture=neutral, PublicKeyToken=b32731d11ce58905">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\log4net.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AudioData.cs" />
+    <Compile Include="HttpStreamingServer.cs" />
+    <Compile Include="IAudioData.cs" />
+    <Compile Include="json\IJson.cs" />
+    <Compile Include="json\JsonMessage.cs" />
+    <Compile Include="json\JsonMsgUtil.cs" />
+    <Compile Include="json\JsonProgram.cs" />
+    <Compile Include="LameProgram.cs" />
+    <Compile Include="libspotify\Album.cs" />
+    <Compile Include="libspotify\AlbumBrowse.cs" />
+    <Compile Include="libspotify\Artist.cs" />
+    <Compile Include="libspotify\ArtistBrowse.cs" />
+    <Compile Include="libspotify\Events\AlbumBrowseEventArgs.cs" />
+    <Compile Include="libspotify\Events\ArtistBrowseEventArgs.cs" />
+    <Compile Include="libspotify\Events\EventWorkItem.cs" />
+    <Compile Include="libspotify\Events\ImageEventArgs.cs" />
+    <Compile Include="libspotify\Events\MusicDeliveryEventArgs.cs" />
+    <Compile Include="libspotify\Events\PlaylistContainerEventArgs.cs" />
+    <Compile Include="libspotify\Events\PlaylistEventArgs.cs" />
+    <Compile Include="libspotify\Events\SearchEventArgs.cs" />
+    <Compile Include="libspotify\Events\SessionEventArgs.cs" />
+    <Compile Include="libspotify\Events\TracksEventArgs.cs" />
+    <Compile Include="libspotify\libspotify.cs" />
+    <Compile Include="libspotify\Link.cs" />
+    <Compile Include="libspotify\PlayList.cs" />
+    <Compile Include="libspotify\PlaylistContainer.cs" />
+    <Compile Include="libspotify\Search.cs" />
+    <Compile Include="libspotify\Session.cs" />
+    <Compile Include="libspotify\SpotifyException.cs" />
+    <Compile Include="libspotify\Track.cs" />
+    <Compile Include="libspotify\User.cs" />
+    <Compile Include="NullAudioData.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SimplePropertiesFile.cs" />
+    <Compile Include="Soundex.cs" />
+    <Compile Include="SpotifyLinkLookup.cs" />
+    <Compile Include="Spotify.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+      <DeployService-RelativeDeployPath>SpotifyResolver.exe.config</DeployService-RelativeDeployPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>COPY "$(ProjectDir)..\lib\libspotify\win32\libspotify.dll" "$(TargetDir)"
+COPY "$(ProjectDir)..\tools\lame\win32\lame.exe" "$(TargetDir)"
+</PreBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets. -->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="PreBuildEvent" Condition="'$(PreBuildEvent)'!=''" DependsOnTargets="$(PreBuildEventDependsOn)">
+    <Exec WorkingDirectory="$(OutDir)" Command="$(PreBuildEvent)" IgnoreExitCode="true" />
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  <PropertyGroup>
+    <PostBuildEvent>if /I "$(ConfigurationName)" == "Release" Eazfuscator.NET.exe "$(TargetPath)" --msbuild-project-path "$(ProjectPath)" --msbuild-project-configuration "$(ConfigurationName)" --msbuild-project-platform "$(PlatformName)" -n --newline-flush</PostBuildEvent>
+  </PropertyGroup>
+</Project>

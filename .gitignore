@@ -1,0 +1,10 @@
+.DS_Store
+*~
+_ReSharper.*
+*.resharper.user
+*.ReSharper.user
+*.csproj.user
+*.suo
+*.sln.cache
+/src/bin
+/src/obj
