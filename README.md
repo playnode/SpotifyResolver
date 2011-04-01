@@ -46,13 +46,13 @@ Pre-requisites:
   * lame encoder for your platform.
 
 This resolver is compiled using MonoDevelop on Mac and Linux, and Visual Studio
-2005 or newer on Windows. It has been tested on Mac, Windows and Linux.
+2005 or newer on Windows.
 
 You need your own API key for this resolver to work. The API key should be
 copied into "#region Key" in the Spotify.cs source file.
 
-It's a good idea to obfuscate the binary product to try avoid anyone obtaining
-your API key in disassembling the CLR assemblies produced.
+It's a good idea to obfuscate the build product, if you are distributing the
+resolver, to avoid anyone easily obtaining your API key using a disassembler.
 
 
 Configure & Run
@@ -88,8 +88,8 @@ If you do get the JSON resolver info above it's ready to test using Playdar.
 
 Check that you also get info from running `lame` which is also required.
 
-Finally, the following guide suggests what files you might have for the
-resolver on each of the major platforms:
+Finally, the following files are typical in the product for each platform. You
+might compile a release build and remove `log4net.dll`, log and debug files.
 
 Mac OS
 
