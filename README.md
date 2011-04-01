@@ -30,9 +30,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 Note
 ----
 
-You must use a Spotify Premium account to use this resolver at all.
-You will also require a Spotify API key, which is available from
-[the Spotify Developers site](http://developer.spotify.com/).
+This resolver can only be used with a Spotify Premium accounts. You will need
+also need a Spotify API key, which is available from the 
+[Spotify Developers site](http://developer.spotify.com/).
 
 
 Compiling
