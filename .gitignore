@@ -8,3 +8,5 @@ _ReSharper.*
 *.sln.cache
 /src/bin
 /src/obj
+/src/PlaySpot.userprefs
+/src/SpotifyResolver.pidb

@@ -70,8 +70,8 @@ namespace Stever.PlaySpot
 
 				/*
                 // Expire by a given date.
-                var time = DateTime.Now;
-                var expires = new DateTime(2010, 12, 1);
+                DateTime time = DateTime.Now;
+                DateTime expires = new DateTime(2011, 6, 1);
                 if (time > expires)
                 {
 #if DEBUG
