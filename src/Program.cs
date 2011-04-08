@@ -95,186 +95,7 @@ namespace Stever.PlaySpot
                     }
                     else
                     {
-#if DEBUG
-                        if (Log.IsInfoEnabled) Log.Info("Started.");
-#endif
-
-                        // Get the configuration from the Playdar etc folder.
-                        string etc = Environment.GetEnvironmentVariable("PLAYDAR_ETC");
-#if DEBUG
-                        if (Log.IsDebugEnabled)
-                            Log.Debug("PLAYDAR_ETC=\"" + etc + "\"");
-#endif
-                        if (string.IsNullOrEmpty(etc))
-                            etc = "etc";
-
-                        string configFilename = etc + "/spotify.conf";
-
-                        if (!File.Exists(configFilename))
-                        {
-#if DEBUG
-                            if (Log.IsErrorEnabled)
-                                Log.Error("Spotify configuration file not found!");
-#endif
-                            return;
-                        }
-
-                        SimplePropertiesFile config = new SimplePropertiesFile(configFilename);
-                        string username;
-                        string password;
-                        try
-                        {
-                            username = config.Sections["spotify"]["username"];
-                            password = config.Sections["spotify"]["password"];
-                        }
-                        catch (Exception)
-                        {
-#if DEBUG
-                            if (Log.IsErrorEnabled)
-                                Log.Error("Couldn't get username or password from config file!");
-#endif
-                            return;
-                        }
-
-                        // Login to Spotify.
-                        Spotify spotify = new Spotify();
-                        bool loginOk = spotify.Login(username, password);
-                        if (loginOk)
-                        {
-
-                            // Create a lookup table for Spotify links and UUIDs.
-                            SpotifyLinkLookup spotifyLinkLookup = new SpotifyLinkLookup();
-
-                            // Create an HTTP server for streaming mp3.
-                            HttpStreamingServer streamServer = new HttpStreamingServer(spotify, spotifyLinkLookup);
-                            streamServer.Start();
-
-                            // Return resolver info.
-                            SendJsonOutput(SpotifyResolverInfo);
-
-                            // Read JSON queries.
-                            Stream input = Console.OpenStandardInput();
-                            do
-                            {
-                                string json = JsonMsgUtil.ExtractJsonInput(input);
-                                if (String.IsNullOrEmpty(json) || json == "{}")
-                                {
-#if DEBUG
-                                    if (Log.IsInfoEnabled)
-                                        Log.Info("Empty message received. Leaving message receive loop.");
-#endif
-                                    break;
-                                }
-
-#if DEBUG
-                                if (Log.IsDebugEnabled)
-                                    Log.Debug(json);
-#endif
-
-                                JObject o = JObject.Parse(json);
-                                string msgtype = (string)o["_msgtype"];
-								if (String.IsNullOrEmpty(msgtype))
-								{
-#if DEBUG
-                                    if (Log.IsWarnEnabled) 
-                                    	Log.Warn("No message type provided. Leaving receive loop.");
-#endif
-                                    break;
-								}
-								else if (msgtype != "rq")
-                                {
-#if DEBUG
-                                    if (Log.IsWarnEnabled)
-										Log.Warn("Unexpected JSON _msgtype! " + msgtype);
-#endif
-                                    break;
-                                }
-
-#if DEBUG
-                                if (Log.IsDebugEnabled)
-                                    Log.Debug("Performing search...");
-#endif
-
-                                // Perform search.
-                                string artist = (string)o["artist"];
-                                string track = (string)o["track"];
-                                string album = (string)o["album"];
-                                List<Track> searchResults = spotify.Search(artist, track, album);
-
-#if DEBUG
-                                if (Log.IsDebugEnabled)
-                                    Log.Debug("searchResults.Count = " + searchResults.Count);
-#endif
-
-                                // Build JSON results.
-                                StringBuilder jsonBuild = new StringBuilder();
-                                JsonTextWriter jsonWriter = new JsonTextWriter(new StringWriter(jsonBuild));
-                                jsonWriter.WriteStartObject();
-                                WriteProperty(jsonWriter, "_msgtype", "results");
-                                WriteProperty(jsonWriter, "qid", (string) o["qid"]);
-                                jsonWriter.WritePropertyName("results");
-                                jsonWriter.WriteStartArray();
-                                int i = 0;
-                                foreach (Track r in searchResults)
-                                {
-                                    // Limit number of possible results.
-                                    if (++i > MaxResults)
-                                    {
-#if DEBUG
-                                        if (Log.IsWarnEnabled)
-                                            Log.Warn("Only returning first " + MaxResults +
-                                                " of " + searchResults.Count + " results.");
-#endif
-
-                                        break;
-                                    }
-
-                                    // Obtain a GUID for the stream request.
-                                    string sid = spotifyLinkLookup.NewGuid(r.LinkString);
-
-                                    // Build a URL for the track to be delivered.
-                                    StringBuilder urlBuild = new StringBuilder();
-                                    urlBuild.Append(streamServer.BaseUrl).Append(sid);
-                                    string url = urlBuild.ToString();
-#if DEBUG
-                                    if (Log.IsDebugEnabled)
-                                        Log.Debug("Stream URL = " + url);
-#endif
-
-                                    // Work out the content length.
-#if DEBUG
-                                    if (Log.IsDebugEnabled) Log.Debug("Duration: " + r.Duration);
-#endif
-                                    int seconds = r.Duration / 1000;
-
-                                    // Add track result to JSON response.
-                                    jsonWriter.WriteStartObject();
-                                    WriteProperty(jsonWriter, "artist", r.Artists[0].Name);
-                                    WriteProperty(jsonWriter, "track", r.Name);
-                                    WriteProperty(jsonWriter, "album", r.Album.Name);
-                                    WriteProperty(jsonWriter, "mimetype", "audio/mpeg");
-                                    WriteProperty(jsonWriter, "source", "Spotify");
-                                    WriteProperty(jsonWriter, "url", url);
-                                    WriteProperty(jsonWriter, "duration", seconds);
-                                    WriteProperty(jsonWriter, "score", CalculateScore(r, artist, track, album));
-                                    WriteProperty(jsonWriter, "bitrate", LameProgram.BitRate);
-                                    jsonWriter.WriteEndObject();
-                                }
-                                jsonWriter.WriteEnd();
-                                jsonWriter.WriteEndObject();
-
-                                // Send the JSON response to search query.
-                                SendJsonOutput(jsonBuild.ToString());
-
-                            } while (true);
-
-                            // Tidy up after stream server.
-                            streamServer.Shutdown();
-
-                            // Logout of Spotify.
-                            spotify.Logout();
-
-                        }
+                        RunProgram();
                     }
                 }
             }
@@ -324,6 +145,190 @@ namespace Stever.PlaySpot
             if (Log.IsDebugEnabled) Log.Debug("Calling Kill on current process.");
 #endif
             Process.GetCurrentProcess().Kill();
+        }
+
+        static void RunProgram()
+        {
+#if DEBUG
+            if (Log.IsInfoEnabled) Log.Info("Started.");
+#endif
+
+            // Get the configuration from the Playdar etc folder.
+            string etc = Environment.GetEnvironmentVariable("PLAYDAR_ETC");
+#if DEBUG
+            if (Log.IsDebugEnabled)
+                Log.Debug("PLAYDAR_ETC=\"" + etc + "\"");
+#endif
+            if (string.IsNullOrEmpty(etc))
+                etc = "etc";
+
+            string configFilename = etc + "/spotify.conf";
+
+            if (!File.Exists(configFilename))
+            {
+#if DEBUG
+                if (Log.IsErrorEnabled)
+                    Log.Error("Spotify configuration file not found!");
+#endif
+                return;
+            }
+
+            SimplePropertiesFile config = new SimplePropertiesFile(configFilename);
+            string username;
+            string password;
+            try
+            {
+                username = config.Sections["spotify"]["username"];
+                password = config.Sections["spotify"]["password"];
+            }
+            catch (Exception)
+            {
+#if DEBUG
+                if (Log.IsErrorEnabled)
+                    Log.Error("Couldn't get username or password from config file!");
+#endif
+                return;
+            }
+
+            // Login to Spotify.
+            Spotify spotify = new Spotify();
+            bool loginOk = spotify.Login(username, password);
+            if (loginOk)
+            {
+
+                // Create a lookup table for Spotify links and UUIDs.
+                SpotifyLinkLookup spotifyLinkLookup = new SpotifyLinkLookup();
+
+                // Create an HTTP server for streaming mp3.
+                HttpStreamingServer streamServer = new HttpStreamingServer(spotify, spotifyLinkLookup);
+                streamServer.Start();
+
+                // Return resolver info.
+                SendJsonOutput(SpotifyResolverInfo);
+
+                // Read JSON queries.
+                Stream input = Console.OpenStandardInput();
+                do
+                {
+                    string json = JsonMsgUtil.ExtractJsonInput(input);
+                    if (String.IsNullOrEmpty(json) || json == "{}")
+                    {
+#if DEBUG
+                        if (Log.IsInfoEnabled)
+                            Log.Info("Empty message received. Leaving message receive loop.");
+#endif
+                        break;
+                    }
+
+#if DEBUG
+                    if (Log.IsDebugEnabled)
+                        Log.Debug(json);
+#endif
+
+                    JObject o = JObject.Parse(json);
+                    string msgtype = (string)o["_msgtype"];
+                    if (String.IsNullOrEmpty(msgtype))
+                    {
+#if DEBUG
+                        if (Log.IsWarnEnabled)
+                            Log.Warn("No message type provided. Leaving receive loop.");
+#endif
+                        break;
+                    }
+                    else if (msgtype != "rq")
+                    {
+#if DEBUG
+                        if (Log.IsWarnEnabled)
+                            Log.Warn("Unexpected JSON _msgtype! " + msgtype);
+#endif
+                        break;
+                    }
+
+#if DEBUG
+                    if (Log.IsDebugEnabled)
+                        Log.Debug("Performing search...");
+#endif
+
+                    // Perform search.
+                    string artist = (string)o["artist"];
+                    string track = (string)o["track"];
+                    string album = (string)o["album"];
+                    List<Track> searchResults = spotify.Search(artist, track, album);
+
+#if DEBUG
+                    if (Log.IsDebugEnabled)
+                        Log.Debug("searchResults.Count = " + searchResults.Count);
+#endif
+
+                    // Build JSON results.
+                    StringBuilder jsonBuild = new StringBuilder();
+                    JsonTextWriter jsonWriter = new JsonTextWriter(new StringWriter(jsonBuild));
+                    jsonWriter.WriteStartObject();
+                    WriteProperty(jsonWriter, "_msgtype", "results");
+                    WriteProperty(jsonWriter, "qid", (string)o["qid"]);
+                    jsonWriter.WritePropertyName("results");
+                    jsonWriter.WriteStartArray();
+                    int i = 0;
+                    foreach (Track r in searchResults)
+                    {
+                        // Limit number of possible results.
+                        if (++i > MaxResults)
+                        {
+#if DEBUG
+                            if (Log.IsWarnEnabled)
+                                Log.Warn("Only returning first " + MaxResults +
+                                    " of " + searchResults.Count + " results.");
+#endif
+
+                            break;
+                        }
+
+                        // Obtain a GUID for the stream request.
+                        string sid = spotifyLinkLookup.NewGuid(r.LinkString);
+
+                        // Build a URL for the track to be delivered.
+                        StringBuilder urlBuild = new StringBuilder();
+                        urlBuild.Append(streamServer.BaseUrl).Append(sid);
+                        string url = urlBuild.ToString();
+#if DEBUG
+                        if (Log.IsDebugEnabled)
+                            Log.Debug("Stream URL = " + url);
+#endif
+
+                        // Work out the content length.
+#if DEBUG
+                        if (Log.IsDebugEnabled) Log.Debug("Duration: " + r.Duration);
+#endif
+                        int seconds = r.Duration / 1000;
+
+                        // Add track result to JSON response.
+                        jsonWriter.WriteStartObject();
+                        WriteProperty(jsonWriter, "artist", r.Artists[0].Name);
+                        WriteProperty(jsonWriter, "track", r.Name);
+                        WriteProperty(jsonWriter, "album", r.Album.Name);
+                        WriteProperty(jsonWriter, "mimetype", "audio/mpeg");
+                        WriteProperty(jsonWriter, "source", "Spotify");
+                        WriteProperty(jsonWriter, "url", url);
+                        WriteProperty(jsonWriter, "duration", seconds);
+                        WriteProperty(jsonWriter, "score", CalculateScore(r, artist, track, album));
+                        WriteProperty(jsonWriter, "bitrate", LameProgram.BitRate);
+                        jsonWriter.WriteEndObject();
+                    }
+                    jsonWriter.WriteEnd();
+                    jsonWriter.WriteEndObject();
+
+                    // Send the JSON response to search query.
+                    SendJsonOutput(jsonBuild.ToString());
+
+                } while (true);
+
+                // Tidy up after stream server.
+                streamServer.Shutdown();
+
+                // Logout of Spotify.
+                spotify.Logout();
+
+            }
         }
 
         #region Scoring
