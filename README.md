@@ -1,5 +1,5 @@
-PlaySpot
-========
+LibSpotifySharp-Resolver
+========================
 
 Playdar resolver for Spotify.
 
