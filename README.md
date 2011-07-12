@@ -1,7 +1,7 @@
 LibSpotifySharp-Resolver
 ========================
 
-Playdar resolver for Spotify.
+Playdar resolver for Spotify, using LibSpotify and LibSpotify-Sharp.
 
 Copyright (c) 2011 Steven Robertson, steverobertson@gmail.com
 
